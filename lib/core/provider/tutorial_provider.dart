@@ -3,94 +3,117 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TutorialProvider extends ChangeNotifier {
-  List<GlobalKey<FocusedMenuHolderState>> tutorialKeys = [];
-  int _currentStep = 0;
-  bool _isTutorialActive = false;
-  bool _pendingTutorialStart = false;
+  final Map<String, List<GlobalKey<FocusedMenuHolderState>>> _tutorialKeysMap = {};
+  final Map<String, int> _currentStepMap = {};
+  final Map<String, bool> _isTutorialActiveMap = {};
+  final Map<String, bool> _pendingTutorialStartMap = {};
 
-  int get currentStep => _currentStep;
-  bool get isTutorialActive => _isTutorialActive;
+  /// Get tutorial keys for a specific screen
+  List<GlobalKey<FocusedMenuHolderState>> getTutorialKeys(String screenName) {
+    return _tutorialKeysMap[screenName] ?? [];
+  }
 
-  /// Check if the tutorial has been seen and start it if not.
-  Future<void> checkAndStartTutorial(BuildContext context) async {
+  /// Get current step for a specific screen
+  int getCurrentStep(String screenName) {
+    return _currentStepMap[screenName] ?? 0;
+  }
+
+  /// Check if tutorial is active for a specific screen
+  bool isTutorialActive(String screenName) {
+    return _isTutorialActiveMap[screenName] ?? false;
+  }
+
+  /// Check if the tutorial has been seen for a screen and start it if not.
+  Future<void> checkAndStartTutorial(BuildContext context, String screenName, {int keyCount = 10}) async {
     final prefs = await SharedPreferences.getInstance();
-    bool hasSeenTutorial = prefs.getBool('hasSeenTutorial') ?? false;
+    String tutorialKey = 'hasSeenTutorial_$screenName';
+    bool hasSeenTutorial = prefs.getBool(tutorialKey) ?? false;
 
     if (!hasSeenTutorial) {
-      await prefs.setBool('hasSeenTutorial', false); // Set to false to start the tutorial
-      await _initializeTutorialKeys();
-      _isTutorialActive = true;
-      _pendingTutorialStart = true;
+      await _initializeTutorialKeys(screenName, keyCount);
+      _isTutorialActiveMap[screenName] = true;
+      _pendingTutorialStartMap[screenName] = true;
       
       // Use a post-frame callback to ensure widgets are built
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _startTutorialWithDelay(context);
+        _startTutorialWithDelay(context, screenName);
       });
     }
   }
 
-  /// Initialize the tutorial keys dynamically.
-  Future<void> _initializeTutorialKeys() async {
-    tutorialKeys = List.generate(10, (index) => GlobalKey<FocusedMenuHolderState>());
+  /// Initialize the tutorial keys dynamically for a specific screen.
+  Future<void> _initializeTutorialKeys(String screenName, int keyCount) async {
+    _tutorialKeysMap[screenName] = List.generate(keyCount, (index) => GlobalKey<FocusedMenuHolderState>());
+    _currentStepMap[screenName] = 0;
     notifyListeners();
   }
 
   /// Start the tutorial with a small delay to ensure everything is ready.
-  void _startTutorialWithDelay(BuildContext context) {
-    if (_pendingTutorialStart) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        _startTutorial(context);
-        _pendingTutorialStart = false;
+  void _startTutorialWithDelay(BuildContext context, String screenName) {
+    if (_pendingTutorialStartMap[screenName] == true) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _startTutorial(context, screenName);
+        _pendingTutorialStartMap[screenName] = false;
       });
     }
   }
 
-  /// Start the tutorial at the current step.
-  void _startTutorial(BuildContext context) {
-    if (_isTutorialActive &&
-        _currentStep < tutorialKeys.length &&
-        tutorialKeys[_currentStep].currentState != null &&
-        tutorialKeys[_currentStep].currentContext != null) {
-      tutorialKeys[_currentStep].currentState!.openMenu(
-        tutorialKeys[_currentStep].currentContext!,
+  /// Start the tutorial at the current step for a specific screen.
+  void _startTutorial(BuildContext context, String screenName) {
+    final keys = _tutorialKeysMap[screenName] ?? [];
+    final currentStep = _currentStepMap[screenName] ?? 0;
+    final isActive = _isTutorialActiveMap[screenName] ?? false;
+
+    if (isActive &&
+        currentStep < keys.length &&
+        keys[currentStep].currentState != null &&
+        keys[currentStep].currentContext != null) {
+      keys[currentStep].currentState!.openMenu(
+        keys[currentStep].currentContext!,
       );
     }
   }
 
   /// Move to the next step, closing the current menu first.
-  void onNext(BuildContext context) {
-    if (_currentStep < tutorialKeys.length - 1) {
+  void onNext(BuildContext context, String screenName) {
+    final keys = _tutorialKeysMap[screenName] ?? [];
+    final currentStep = _currentStepMap[screenName] ?? 0;
+
+    if (currentStep < keys.length - 1) {
       _closeCurrentMenu(context, () {
-        _currentStep++;
-        _startTutorial(context);
+        _currentStepMap[screenName] = currentStep + 1;
+        _startTutorial(context, screenName);
         notifyListeners();
       });
     } else {
-      onSkip(context); // End tutorial if last step
+      onSkip(context, screenName); // End tutorial if last step
     }
   }
 
   /// Move to the previous step, closing the current menu first.
-  void onPrevious(BuildContext context) {
-    if (_currentStep > 0) {
+  void onPrevious(BuildContext context, String screenName) {
+    final currentStep = _currentStepMap[screenName] ?? 0;
+
+    if (currentStep > 0) {
       _closeCurrentMenu(context, () {
-        _currentStep--;
-        _startTutorial(context);
+        _currentStepMap[screenName] = currentStep - 1;
+        _startTutorial(context, screenName);
         notifyListeners();
       });
     }
   }
 
   /// Skip the tutorial, closing the current menu.
-  void onSkip(BuildContext context) {
+  void onSkip(BuildContext context, String screenName) {
     _closeCurrentMenu(context, () async {
-      _isTutorialActive = false;
-      _currentStep = 0;
-      _pendingTutorialStart = false;
+      _isTutorialActiveMap[screenName] = false;
+      _currentStepMap[screenName] = 0;
+      _pendingTutorialStartMap[screenName] = false;
       
       // Mark tutorial as seen when skipped
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('hasSeenTutorial', true);
+      String tutorialKey = 'hasSeenTutorial_$screenName';
+      await prefs.setBool(tutorialKey, true);
       
       notifyListeners();
     });
@@ -104,5 +127,18 @@ class TutorialProvider extends ChangeNotifier {
     } else {
       onClosed();
     }
+  }
+
+  /// Reset tutorial for a specific screen (useful for testing)
+  Future<void> resetTutorial(String screenName) async {
+    final prefs = await SharedPreferences.getInstance();
+    String tutorialKey = 'hasSeenTutorial_$screenName';
+    await prefs.setBool(tutorialKey, false);
+    
+    _isTutorialActiveMap[screenName] = false;
+    _currentStepMap[screenName] = 0;
+    _pendingTutorialStartMap[screenName] = false;
+    
+    notifyListeners();
   }
 }

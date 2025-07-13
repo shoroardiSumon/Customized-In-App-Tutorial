@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'common_info_widget.dart';
 
 class CommonFocusedMenuHolder extends StatelessWidget {
+  final String screenName;
   final int tutorialIndex;
   final String title;
   final Widget popupChild;
@@ -13,6 +14,7 @@ class CommonFocusedMenuHolder extends StatelessWidget {
 
   const CommonFocusedMenuHolder({
     super.key,
+    required this.screenName,
     required this.tutorialIndex,
     required this.title,
     required this.popupChild,
@@ -22,13 +24,14 @@ class CommonFocusedMenuHolder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tutorialProvider = context.watch<TutorialProvider>();
+    final tutorialKeys = tutorialProvider.getTutorialKeys(screenName);
 
-    if (tutorialProvider.tutorialKeys.isEmpty || tutorialIndex >= tutorialProvider.tutorialKeys.length) {
+    if (tutorialKeys.isEmpty || tutorialIndex >= tutorialKeys.length) {
       return child;
     }
 
     return FocusedMenuHolder(
-      key: tutorialProvider.tutorialKeys[tutorialIndex],
+      key: tutorialKeys[tutorialIndex],
       menuWidth: MediaQuery.of(context).size.width,
       menuItemExtent: 120,
       openWithTap: true,
@@ -45,9 +48,9 @@ class CommonFocusedMenuHolder extends StatelessWidget {
           title: CommonInfoWidget(
             title: title,
             popupChild: popupChild,
-            onPrevious: () => tutorialProvider.onPrevious(context),
-            onNext: () => tutorialProvider.onNext(context),
-            onSkip: () => tutorialProvider.onSkip(context),
+            onPrevious: () => tutorialProvider.onPrevious(context, screenName),
+            onNext: () => tutorialProvider.onNext(context, screenName),
+            onSkip: () => tutorialProvider.onSkip(context, screenName),
           ),
           onPressed: () {},
         ),

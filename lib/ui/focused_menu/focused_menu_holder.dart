@@ -62,15 +62,15 @@ class FocusedMenuHolderState extends State<FocusedMenuHolder> {
         key: containerKey,
         ///update the onTap and onLongPress
         onTap: () async {
-          widget.onPressed();
-          if (widget.openWithTap) {
-            await openMenu(context);
-          }
+          // widget.onPressed();
+          // if (widget.openWithTap) {
+          //   await openMenu(context);
+          // }
         },
         onLongPress: () async {
-          if (!widget.openWithTap) {
-            await openMenu(context);
-          }
+          // if (!widget.openWithTap) {
+          //   await openMenu(context);
+          // }
         },
         child: widget.child
       );
@@ -156,7 +156,7 @@ class FocusedMenuDetails extends StatelessWidget {
           children: <Widget>[
             GestureDetector(
                 onTap: () {
-                  Navigator.pop(context);
+                  //Navigator.pop(context);
                 },
                 child: BackdropFilter(
                   filter: ImageFilter.blur(

@@ -1,3 +1,4 @@
+import 'package:apptour/ui/tutorial_focused_menu/demoscreen.dart';
 import 'package:apptour/ui/tutorial_focused_menu/focused_menu_demonstration.dart';
 import 'package:flutter/material.dart';
 
@@ -33,9 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
               ElevatedButton(
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FocusedMenuDemonstration()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const Demonstration()));
                 },
-                child: const Text('Focused Only One Time'),
+                child: const Text('Demonstration'),
               ),
           
               const SizedBox(height: 20),

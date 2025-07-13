@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class CommonInfoWidget extends StatelessWidget {
   final String title;
+  final Widget popupChild;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onSkip;
@@ -9,6 +10,7 @@ class CommonInfoWidget extends StatelessWidget {
   const CommonInfoWidget({
     super.key,
     required this.title,
+    required this.popupChild,
     required this.onPrevious,
     required this.onNext,
     required this.onSkip,
@@ -45,6 +47,8 @@ class CommonInfoWidget extends StatelessWidget {
               ),
             ],
           ),
+          const Spacer(),
+          popupChild,
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

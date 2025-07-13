@@ -11,15 +11,20 @@ class FocusedMenuDemonstration extends StatefulWidget {
 }
 
 class _FocusedMenuDemonstrationState extends State<FocusedMenuDemonstration> {
+  
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => TutorialProvider(),
-      child: Builder(
-        builder: (context) {
+      child: Consumer<TutorialProvider>(
+        builder: (context, tutorialProvider, child) {
+          // Ensure the tutorial starts only after the widget is built
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<TutorialProvider>().checkAndStartTutorial(context);
+            if (tutorialProvider.tutorialKeys.isEmpty) {
+              tutorialProvider.checkAndStartTutorial(context);
+            }
           });
+          
           return Scaffold(
             appBar: AppBar(title: const Text('Focused Menu Demo')),
             body: SingleChildScrollView(

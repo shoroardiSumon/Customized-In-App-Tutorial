@@ -6,6 +6,7 @@ class TutorialProvider extends ChangeNotifier {
   List<GlobalKey<FocusedMenuHolderState>> tutorialKeys = [];
   int _currentStep = 0;
   bool _isTutorialActive = false;
+  bool _pendingTutorialStart = false;
 
   int get currentStep => _currentStep;
   bool get isTutorialActive => _isTutorialActive;
@@ -16,10 +17,15 @@ class TutorialProvider extends ChangeNotifier {
     bool hasSeenTutorial = prefs.getBool('hasSeenTutorial') ?? false;
 
     if (!hasSeenTutorial) {
-      await prefs.setBool('hasSeenTutorial', false); // actually true, but we set it to false to start the tutorial
+      await prefs.setBool('hasSeenTutorial', false); // Set to false to start the tutorial
       await _initializeTutorialKeys();
       _isTutorialActive = true;
-      _startTutorial(context);
+      _pendingTutorialStart = true;
+      
+      // Use a post-frame callback to ensure widgets are built
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _startTutorialWithDelay(context);
+      });
     }
   }
 
@@ -27,6 +33,16 @@ class TutorialProvider extends ChangeNotifier {
   Future<void> _initializeTutorialKeys() async {
     tutorialKeys = List.generate(10, (index) => GlobalKey<FocusedMenuHolderState>());
     notifyListeners();
+  }
+
+  /// Start the tutorial with a small delay to ensure everything is ready.
+  void _startTutorialWithDelay(BuildContext context) {
+    if (_pendingTutorialStart) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _startTutorial(context);
+        _pendingTutorialStart = false;
+      });
+    }
   }
 
   /// Start the tutorial at the current step.
@@ -67,9 +83,15 @@ class TutorialProvider extends ChangeNotifier {
 
   /// Skip the tutorial, closing the current menu.
   void onSkip(BuildContext context) {
-    _closeCurrentMenu(context, () {
+    _closeCurrentMenu(context, () async {
       _isTutorialActive = false;
       _currentStep = 0;
+      _pendingTutorialStart = false;
+      
+      // Mark tutorial as seen when skipped
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('hasSeenTutorial', true);
+      
       notifyListeners();
     });
   }

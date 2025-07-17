@@ -152,7 +152,7 @@ class _MultiscreenSequenceState extends State<MultiscreenSequence> {
       create: (_) => TutorialProvider(),
       child: TutorialScreen(
         screenName: screenName,
-        tutorialKeyCount: 6, // Total of 6 containers from 3 classes
+        tutorialKeyCount: 3, // Total of 6 containers from 3 classes
         child: Scaffold(
           appBar: AppBar(title: const Text('Home Page')),
           body: const SingleChildScrollView(
@@ -164,12 +164,25 @@ class _MultiscreenSequenceState extends State<MultiscreenSequence> {
                 children: [
                   ContainerSet1(),
                   SizedBox(height: 20),
-                  ContainerSet2(),
-                  SizedBox(height: 20),
-                  ContainerSet3(),
-                  SizedBox(height: 40),
+                  // ContainerSet2(),
+                  // SizedBox(height: 20),
+                  // ContainerSet3(),
+                  // SizedBox(height: 40),
                 ],
               ),
+            ),
+          ),
+          // FAB wrapped with CommonFocusedMenuHolder for the tutorial
+          floatingActionButton: CommonFocusedMenuHolder(
+            screenName: 'home_page',
+            tutorialIndex: 2, // Last step after containers
+            title: 'Info for Floating Action Button',
+            popupChild: const Text('This is the information for the Floating Action Button.'),
+            child: FloatingActionButton(
+              onPressed: () {
+                // FAB action
+              },
+              child: const Icon(Icons.add),
             ),
           ),
         ),
